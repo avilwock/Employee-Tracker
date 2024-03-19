@@ -35,6 +35,7 @@ async function prompt() {
     ];
     
     const answers = await inquirer.prompt(beginQuestions);
+    answers.task = formatText(answers.task);
     console.log(answers.task)
     
     switch (answers.task) {
@@ -67,6 +68,10 @@ async function prompt() {
       prompt();
       break;
     }
+}
+
+function formatText(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCzase();
 }
 
 function viewAllEmployees() {
