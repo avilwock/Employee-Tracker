@@ -60,11 +60,31 @@ To install, open the integerated terminal, and type in npm install, then open my
 
 ## Usage
 
-To use this repository: To use this program, install the necessary packages in the terminal with npm install, connect to mysql in the command terminal by typing in mysql -u <your username> -p. Then enter your password to run it. Type in source db/schema.sql, and press enter. Wait for the file to show the schema has been imported. Then type in source db/seeds.sql and press enter to retrieve the data populating the tables.  Next, close out mysql by typing quit. Then type in node index.js. The program will start. Answer the questions provided for you.
+To use this program, install the necessary packages in the terminal with npm install, connect to mysql in the command terminal by typing in mysql -u <your username> -p. Then enter your password to run it. Type in source db/schema.sql, and press enter. Wait for the file to show the schema has been imported. Then type in source db/seeds.sql and press enter to retrieve the data populating the tables.  Next, close out mysql by typing quit. Then type in node index.js. The program will start. Answer the questions provided for you.
+
+![alt text](<images/Employee Tracker img-1.png>)
+
+![alt text](<images/Employee Tracker img -2.png>)
+
+![alt text](<images/Employee Tracker img -3.png>)
+
+https://drive.google.com/file/d/16pe2eDyMf7bD5NT6Tey-AIj-PYDIoTqT/view
 
 ## Credits
 
 With thanks to:
+
+https://www.tabnine.com/code/javascript/functions/inquirer/Inquirer/prompt 
+
+https://www.reddit.com/r/node/comments/9q3chw/looping_inquirerjs_prompts/
+
+https://snyk.io/advisor/npm-package/inquirer/functions/inquirer.prompt
+
+https://www.npmjs.com/package/inquirer
+
+https://www.w3schools.com/sql/sql_syntax.asp
+
+Logan Garland, Coding Bootcamp, University of Irvine California
 
 ## Questions
 

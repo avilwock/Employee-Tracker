@@ -470,7 +470,6 @@ async function addEmployee() {
       const [roles, managers] = await Promise.all([
         connection.promise().query("SELECT id, title FROM role"),
         connection.promise().query("SELECT id, CONCAT(first_name, ' ', last_name) AS manager FROM employee"),
-        connection.promise().query("SELECT id, CONCAT(first_name, ' ', last_name) AS employee FROM employee")
       ]);
 
       const employeeDetails = await inquirer.prompt([
@@ -486,13 +485,13 @@ async function addEmployee() {
       },
       {
         type: 'list',
-        name: 'role',
+        name: 'role_id',
         message: "Please select the employees role at the company",
         choices: roles[0].map(role => ({ value: role.id, name: role.title})),
       },
       {
         type: 'list',
-        name:'manager',
+        name:'manager_id',
         message: "Please select this employee's manager",
         choices: managers[0].map(manager => ({ value: manager.id, name: manager.manager})),
       }
@@ -502,7 +501,7 @@ async function addEmployee() {
       employeeDetails.last_name = formatText(employeeDetails.last_name);
 
       await connection.promise().query('INSERT INTO employee SET ?', employeeDetails);
-      console.log(`Added ${first_name}, ${last_name} to the database`)
+      console.log(`Added ${employeeDetails.first_name}, ${employeeDetails.last_name} to the database`)
     } catch (err) {
       console.error('Error adding Employee:', err);// Prompt again if there's an error
       return;
@@ -515,16 +514,16 @@ async function addDepartment() {
     const departmentName = await inquirer.prompt([
       {
         type: 'input',
-        name: 'new_department',
+        name: 'name',
         message: 'What is the name of the department?',
       }
     ])
 
-    departmentName.new_department = formatText(departmentName.new_department);
+    departmentName.name = formatText(departmentName.name);
 
     await connection.promise().query('INSERT INTO department SET ?', departmentName);
 
-    console.log(`Added ${departmentName} to the database`);
+    console.log(`Added ${departmentName.name} to the database`);
   } catch (err) {
     console.error('Error adding new department:', err);
     return
@@ -544,7 +543,7 @@ async function addRole() {
       const newRole = await inquirer.prompt([
       {
         type: 'input',
-        name: 'role',
+        name: 'title',
         message: "What is the name of the role?",
       },
       {
@@ -554,18 +553,18 @@ async function addRole() {
       },
       {
         type: 'list',
-        name: 'department',
+        name: 'department_id',
         message: "What department does the role belong to?",
         choices: departments[0].map(department => ({ value: department.id, name: department.name})),
       },
       ])
 
-      newRole.role = formatText(newRole.role);
+      newRole.title = formatText(newRole.title);
 
       await connection.promise().query('INSERT INTO role SET ?', newRole);
-      console.log(`Added ${newRole.role} to the database`)
+      console.log(`Added ${newRole.title} to the database`)
     } catch (err) {
-      console.error('Error adding Employee:', err);// Prompt again if there's an error
+      console.error('Error adding Role:', err);// Prompt again if there's an error
       return;
     }
     prompt();
