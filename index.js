@@ -15,11 +15,11 @@ const connection = mysql.createConnection({
     startUp();
 
     function startUp() {
-      console.log("************************************")
-      console.log("*                                  *")
-      console.log("*         Employee Manager         *")
-      console.log("*                                  *")
-      console.log("************************************")
+      console.log(" ---------------------------------- ")
+      console.log("|                                  |")
+      console.log("|           Employee Tracker       |")
+      console.log("|                                  |")
+      console.log(" ---------------------------------- ")
       prompt();
     };
   });
@@ -35,7 +35,6 @@ async function prompt() {
     ];
     
     const answers = await inquirer.prompt(beginQuestions);
-    answers.task = formatText(answers.task);
     console.log(answers.task)
     
     switch (answers.task) {
@@ -71,7 +70,7 @@ async function prompt() {
 }
 
 function formatText(text) {
-  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCzase();
+  return text.replace(/\b\w/g, match => match.toUpperCase());
 }
 
 function viewAllEmployees() {
@@ -296,6 +295,9 @@ async function addEmployee() {
       }
       ])
 
+      employeeDetails.first_name = formatText(employeeDetails.first_name);
+      employeeDetails.last_name = formatText(employeeDetails.last_name);
+
       await connection.promise().query('INSERT INTO employee SET ?', employeeDetails);
       console.log(`Added ${first_name}, ${last_name} to the database`)
     } catch (err) {
@@ -314,6 +316,8 @@ async function addDepartment() {
         message: 'What is the name of the department?',
       }
     ])
+
+    departmentName.new_department = formatText(departmentName.new_department);
 
     await connection.promise().query('INSERT INTO department SET ?', departmentName);
 
@@ -352,6 +356,8 @@ async function addRole() {
         choices: departments[0].map(department => ({ value: department.id, name: department.name})),
       },
       ])
+
+      newRole.role = formatText(newRole.role);
 
       await connection.promise().query('INSERT INTO role SET ?', newRole);
       console.log(`Added ${newRole.role} to the database`)

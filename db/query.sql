@@ -40,8 +40,8 @@ JOIN
 INSERT INTO department(name)
 VALUES name;
 
-INSERT
-INTO roles;
+INSERT INTO roles;
 
-INSERT
-INTO employees;
+INSERT INTO employees;
+
+SELECT id, CONCAT(first_name, ' ', last_name) AS employee FROM employee");
