@@ -24,7 +24,7 @@ JOIN
 LEFT JOIN 
         employee AS manager ON employee.manager_id = manager.id;
 
--- View All Roles answer
+-- View All Roles
 SELECT  
         role.id, 
         role.title, 
@@ -35,13 +35,56 @@ FROM
 JOIN
         department ON role.department_id = department.id;
 
+-- Update Managers
+SELECT 
+        id, CONCAT (first_name, ' ', last_name) 
+AS 
+        employee 
+FROM 
+        employee;
 
-
+-- Add more deparments
 INSERT INTO department(name)
 VALUES name;
 
+-- Add more roles
 INSERT INTO roles;
 
+-- Add more employees
 INSERT INTO employees;
 
-SELECT id, CONCAT(first_name, ' ', last_name) AS employee FROM employee");
+-- Show employees by manager
+SELECT
+    manager.id AS manager_id,
+    CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name,
+    employee.id AS employee_id,
+    CONCAT(employee.first_name, ' ', employee.last_name) AS employee_name
+FROM
+    employee
+INNER JOIN
+    employee AS manager ON employee.manager_id = manager.id;
+
+-- Show  employees by department
+SELECT 
+    department.name AS department_name,
+    employee.id,
+    CONCAT (employee.first_name, ' ', employee.last_name) AS employee_name
+FROM 
+    employee
+JOIN    
+    role ON employee.role_id = role.id
+JOIN
+    department ON role.department_id = department.id;
+
+-- view all sales
+SELECT
+    department.name AS department_name,
+    SUM(role.salary) AS total_department_salary
+FROM
+    employee
+JOIN
+    role ON employee.role_id = role.id
+JOIN
+    department ON role.department_id = department.id
+GROUP BY
+    department.name;

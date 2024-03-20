@@ -30,7 +30,7 @@ async function prompt() {
             type: 'list',
             name: 'task',
             message: 'What would you like to do?',
-            choices: ["View All Employees", "Add Employee", "Update Employee Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "Quit"]
+            choices: ["View All Employees", "View Employees By Manager", "View Employees By Department", "Add Employee", "Update Employee Role", "Update Employee Manager", "View All Roles", "Add Role", "View Salary By Department", "View All Departments", "Add Department", "Delete Employee", "Delete Role", "Delete Department", "Quit"]
         }
     ];
     
@@ -41,11 +41,20 @@ async function prompt() {
       case "View All Employees":
         viewAllEmployees();
         break;
+      case "View Employees By Manager":
+        viewManagersEmployees();
+        break;
+      case "View Employees By Department":
+        viewEmployeeDept();
+        break;
       case "Add Employee":
         addEmployee();
         break;
       case "Update Employee Role":
         updateRole();
+        break;
+      case "Update Employee Manager":
+        updateManager();
         break;
       case "View All Roles":
         viewRole();
@@ -53,11 +62,23 @@ async function prompt() {
       case "Add Role":
         addRole();
         break;
+      case "View Salary By Department":
+        viewDeptSalary();
+        break;
       case "View All Departments":
         viewDepartments();
         break;
       case "Add Department":
         addDepartment();
+        break;
+      case "Delete Employee":
+        deleteEmployee();
+        break;
+      case "Delete Role":
+        deleteRole();
+        break;
+      case "Delete Department":
+        deleteDepartment();
         break;
       case "Quit":
         connection.end();
@@ -178,9 +199,152 @@ function viewRole() {
 
 function viewDepartments() {
   const query = `
-    SELECT id, name AS department
+    SELECT 
+      id, 
+      name AS department
     FROM department;
       `;
+
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching roles:', err);
+      prompt(); // Prompt again if there's an error
+    } else {
+      // Find the maximum length for each column
+      const maxLengths = {};
+
+      results.forEach(department => {
+        for (const key in department) {
+          if (department.hasOwnProperty(key)) {
+            const valueLength = String(department[key]).length;
+            const headerLength = String(key).length;
+            maxLengths[key] = Math.max(maxLengths[key] || 0, valueLength, headerLength);
+          }
+        }
+      });
+
+      // Print table headers
+      const headers = Object.keys(maxLengths);
+      console.log(headers.map(header => header.padEnd(maxLengths[header])).join(' | '));
+
+      // Print separator
+      console.log(headers.map(header => '-'.repeat(maxLengths[header])).join(' | '));
+
+      // Print data rows
+      results.forEach(department => {
+        console.log(headers.map(header => String(department[header]).padEnd(maxLengths[header])).join(' | '));
+      });
+
+      prompt(); // Prompt again after viewing employees
+    }
+  });
+}
+
+function viewManagersEmployees() {
+  const query = `
+    SELECT
+      CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name,
+      CONCAT(employee.first_name, ' ', employee.last_name) AS employee_name
+    FROM
+      employee
+    INNER JOIN
+      employee AS manager ON employee.manager_id = manager.id;`
+
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching roles:', err);
+      prompt(); // Prompt again if there's an error
+    } else {
+      // Find the maximum length for each column
+      const maxLengths = {};
+
+      results.forEach(department => {
+        for (const key in department) {
+          if (department.hasOwnProperty(key)) {
+            const valueLength = String(department[key]).length;
+            const headerLength = String(key).length;
+            maxLengths[key] = Math.max(maxLengths[key] || 0, valueLength, headerLength);
+          }
+        }
+      });
+
+      // Print table headers
+      const headers = Object.keys(maxLengths);
+      console.log(headers.map(header => header.padEnd(maxLengths[header])).join(' | '));
+
+      // Print separator
+      console.log(headers.map(header => '-'.repeat(maxLengths[header])).join(' | '));
+
+      // Print data rows
+      results.forEach(department => {
+        console.log(headers.map(header => String(department[header]).padEnd(maxLengths[header])).join(' | '));
+      });
+
+      prompt(); // Prompt again after viewing employees
+    }
+  });
+}
+
+function viewEmployeeDept() {
+  const query = `
+  SELECT 
+  department.name AS department_name,
+  CONCAT (employee.first_name, ' ', employee.last_name) AS employee_name
+FROM 
+  employee
+JOIN    
+  role ON employee.role_id = role.id
+JOIN
+  department ON role.department_id = department.id;`
+
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching roles:', err);
+      prompt(); // Prompt again if there's an error
+    } else {
+      // Find the maximum length for each column
+      const maxLengths = {};
+
+      results.forEach(department => {
+        for (const key in department) {
+          if (department.hasOwnProperty(key)) {
+            const valueLength = String(department[key]).length;
+            const headerLength = String(key).length;
+            maxLengths[key] = Math.max(maxLengths[key] || 0, valueLength, headerLength);
+          }
+        }
+      });
+
+      // Print table headers
+      const headers = Object.keys(maxLengths);
+      console.log(headers.map(header => header.padEnd(maxLengths[header])).join(' | '));
+
+      // Print separator
+      console.log(headers.map(header => '-'.repeat(maxLengths[header])).join(' | '));
+
+      // Print data rows
+      results.forEach(department => {
+        console.log(headers.map(header => String(department[header]).padEnd(maxLengths[header])).join(' | '));
+      });
+
+      prompt(); // Prompt again after viewing employees
+    }
+  });
+}
+
+function viewDeptSalary() {
+  const query = `
+    SELECT
+        department.name AS department_name,
+        SUM(role.salary) AS total_department_salary
+    FROM
+        employee
+    JOIN
+        role ON employee.role_id = role.id
+    JOIN
+        department ON role.department_id = department.id
+    GROUP BY
+        department.name;`
 
   connection.query(query, (err, results) => {
     if (err) {
@@ -254,6 +418,45 @@ async function updateRole() {
           console.log("Employee role updated successfully!");
       } catch (err) {
           console.error('Error updating employee role:', err);
+      }
+
+      prompt(); // Prompt again after updating the employee role
+  });
+}
+
+async function updateManager() {
+  // Fetch employees and roles from the database
+  let employees;
+  try {
+      // Fetch employees
+      employees = await connection.promise().query("SELECT id, CONCAT(first_name, ' ', last_name) AS employee FROM employee");
+  } catch (err) {
+      console.error('Error fetching employees:', err);
+      prompt(); // Prompt again if there's an error
+      return;
+  }
+
+  const managerChoices = employees[0].map(employee => ({ value: employee.id, name: employee.employee }));
+  
+  inquirer.prompt([
+      {
+          type: 'list',
+          name: 'employee_id',
+          message: 'Select the employee whose manager you want to update:',
+          choices: managerChoices,
+      },
+      {
+          type: 'list',
+          name: 'manager_id',
+          message: 'Select the new manager for the employee',
+          choices: managerChoices,
+      },
+  ]).then(async (answers) => {
+      try {
+          await connection.promise().query('UPDATE employee SET manager_id = ? WHERE id = ?', [answers.manager_id, answers.employee_id]);
+          console.log("Employee manager updated successfully!");
+      } catch (err) {
+          console.error('Error updating manager role:', err);
       }
 
       prompt(); // Prompt again after updating the employee role
@@ -368,5 +571,98 @@ async function addRole() {
     prompt();
 }
 
+function deleteEmployee() {
+  connection.query(`SELECT id, CONCAT(first_name, ' ', last_name) AS full_name FROM employee`, (err, results) => {
+    if (err) {
+        console.error('Error fetching employees:', err);
+        prompt();
+    } else {
+        const employeeChoices = results.map(employee => ({
+            name: `${employee.id}: ${employee.full_name}`,
+            value: employee.id
+        }));
+  inquirer.prompt([
+    {
+      type: 'list',
+      name: 'employeeId',
+      message: 'Select an employee to delete',
+      choices: employeeChoices
+  }
+]).then(answer => {
+  const selectedEmployeeId = answer.employeeId;
+  connection.query(`DELETE FROM employee WHERE id = ?`, [selectedEmployeeId], (err, deleteResult) => {
+      if (err) {
+          console.error('Error deleting employee:', err);
+      } else {
+          console.log('Employee deleted successfully');
+      }
+      prompt();
+    })
+});
+}
+});
+}
 
+function deleteRole() {
+  connection.query(`SELECT id, title FROM role`, (err, results) => {
+    if (err) {
+        console.error('Error fetching roles:', err);
+        prompt();
+    } else {
+        const roleChoice = results.map(role => ({
+            name: `${role.id}: ${role.title}`,
+            value: role.id
+        }));
+  inquirer.prompt([
+    {
+      type: 'list',
+      name: 'roleId',
+      message: 'Select a role to delete',
+      choices: roleChoice
+  }
+]).then(answer => {
+  const selectedRoleId = answer.roleId;
+  connection.query(`DELETE FROM role WHERE id = ?`, [selectedRoleId], (err, deleteResult) => {
+      if (err) {
+          console.error('Error deleting role:', err);
+      } else {
+          console.log('Role deleted successfully');
+      }
+      prompt();
+    })
+});
+}
+});
+}
 
+function deleteDepartment() {
+  connection.query(`SELECT id, name FROM department`, (err, results) => {
+    if (err) {
+        console.error('Error fetching departments:', err);
+        prompt();
+    } else {
+        const departmentChoice = results.map(department => ({
+            name: `${department.id}: ${department.name}`,
+            value: department.id
+        }));
+  inquirer.prompt([
+    {
+      type: 'list',
+      name: 'departmentId',
+      message: 'Select a department to delete',
+      choices: departmentChoice
+    }
+]).then(answer => {
+  const selectedDeptId = answer.deptId;
+  connection.query(`DELETE FROM department WHERE id = ?`, [selectedDeptId], (err, deleteResult) => {
+      if (err) {
+          console.error('Error deleting department:', err);
+      } else {
+          console.log('Department deleted successfully');
+      }
+      prompt();
+    })
+});
+}
+});
+}
