@@ -68,6 +68,8 @@ To use this program, install the necessary packages in the terminal with npm ins
 
 ![alt text](<images/Employee Tracker img -3.png>)
 
+![alt text](<images/Employee Tracker img -4.png>)
+
 https://drive.google.com/file/d/16pe2eDyMf7bD5NT6Tey-AIj-PYDIoTqT/view
 
 ## Credits

@@ -1,7 +1,8 @@
-//adds the inquirer and fs node.js modules
+//adds the inquirer and mysql2 modules
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 
+//create a connection with mysql to the local host, with a username of root, a password of root, and a database called employee_db
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -9,6 +10,7 @@ const connection = mysql.createConnection({
     database: 'employee_db',
   });
 
+  //checks for error connecting
   connection.connect((err) => {
     if (err) throw err;
     console.log(`Connected to the database`);
@@ -24,6 +26,7 @@ const connection = mysql.createConnection({
     };
   });
 
+//gives the first question in the nodejs to ask for which action the user wishes to perform
 async function prompt() {
     const beginQuestions = [
         {
@@ -90,10 +93,12 @@ async function prompt() {
     }
 }
 
+//this formats the text so that any entry into the database is uppercase first letter, and the rest are lowercase
 function formatText(text) {
   return text.replace(/\b\w/g, match => match.toUpperCase());
 }
 
+// The view all employees function selects the id, name, title, deparmtnet, salary, and manager to display when selected
 function viewAllEmployees() {
   const query = `
     SELECT  
@@ -122,6 +127,7 @@ function viewAllEmployees() {
       // Find the maximum length for each column
       const maxLengths = {};
 
+      //ensures the formatting allows the columns to match up neatly
       results.forEach(employee => {
         for (const key in employee) {
           if (employee.hasOwnProperty(key)) {
@@ -149,6 +155,7 @@ function viewAllEmployees() {
   });
 }
 
+//This function allows us to viewRoles, including the id, title, department, and salary of the role
 function viewRole() {
   const query = `
       SELECT  
@@ -197,6 +204,7 @@ function viewRole() {
   });
 }
 
+//View a list of departments, with id and name of department
 function viewDepartments() {
   const query = `
     SELECT 
@@ -241,97 +249,118 @@ function viewDepartments() {
 }
 
 function viewManagersEmployees() {
-  const query = `
-    SELECT
+  // Fetch the list of managers with first name and last name combined
+  //SELECT DISTINCT to remove duplicates of the item
+  const managerQuery = `
+    SELECT DISTINCT
       CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name,
-      CONCAT(employee.first_name, ' ', employee.last_name) AS employee_name
+      manager.id AS manager_id
     FROM
-      employee
+      employee AS manager
     INNER JOIN
-      employee AS manager ON employee.manager_id = manager.id;`
+      employee AS employee ON manager.id = employee.manager_id
+    ORDER BY manager_name;
+  `;
 
-  connection.query(query, (err, results) => {
+  connection.query(managerQuery, async (err, managerResults) => {
     if (err) {
-      console.error('Error fetching roles:', err);
+      console.error('Error fetching managers:', err);
       prompt(); // Prompt again if there's an error
     } else {
-      // Find the maximum length for each column
-      const maxLengths = {};
+      // Create choices for managers
+      const managerChoices = managerResults.map(manager => ({
+        value: manager.manager_id,
+        name: manager.manager_name
+      }));
 
-      results.forEach(department => {
-        for (const key in department) {
-          if (department.hasOwnProperty(key)) {
-            const valueLength = String(department[key]).length;
-            const headerLength = String(key).length;
-            maxLengths[key] = Math.max(maxLengths[key] || 0, valueLength, headerLength);
-          }
+      // Ask the user to select a manager
+      const selectedManager = await inquirer.prompt({
+        type: 'list',
+        name: 'managerId',
+        message: 'Select a manager:',
+        choices: managerChoices
+      });
+
+      // Fetch employees under the selected manager
+      const employeeQuery = `
+        SELECT
+          CONCAT(employee.first_name, ' ', employee.last_name) AS employee_name
+        FROM
+          employee
+        WHERE
+          employee.manager_id = ?;
+      `;
+
+      connection.query(employeeQuery, [selectedManager.managerId], (err, employeeResults) => {
+        if (err) {
+          console.error('Error fetching employees:', err);
+        } else {
+          // Display the employees' data
+          console.log("Employees under selected manager:");
+          employeeResults.forEach(employee => {
+            console.log(employee.employee_name);
+          });
         }
+        prompt(); // Prompt again after viewing employees
       });
-
-      // Print table headers
-      const headers = Object.keys(maxLengths);
-      console.log(headers.map(header => header.padEnd(maxLengths[header])).join(' | '));
-
-      // Print separator
-      console.log(headers.map(header => '-'.repeat(maxLengths[header])).join(' | '));
-
-      // Print data rows
-      results.forEach(department => {
-        console.log(headers.map(header => String(department[header]).padEnd(maxLengths[header])).join(' | '));
-      });
-
-      prompt(); // Prompt again after viewing employees
     }
   });
 }
 
-function viewEmployeeDept() {
-  const query = `
-  SELECT 
-  department.name AS department_name,
-  CONCAT (employee.first_name, ' ', employee.last_name) AS employee_name
-FROM 
-  employee
-JOIN    
-  role ON employee.role_id = role.id
-JOIN
-  department ON role.department_id = department.id;`
+//fetch a it of departments, and when selected, show the employees in the department
+async function viewEmployeeDept() {
+  try {
+    // Fetch departments
+    const [departmentResults] = await connection.promise().query(`
+      SELECT DISTINCT
+        department.name AS department_name,
+        department.id AS department_id
+      FROM
+        department
+      ORDER BY
+        department_name;
+    `);
 
-  connection.query(query, (err, results) => {
-    if (err) {
-      console.error('Error fetching roles:', err);
-      prompt(); // Prompt again if there's an error
-    } else {
-      // Find the maximum length for each column
-      const maxLengths = {};
+    // Create choices for departments
+    const departmentChoices = departmentResults.map(department => ({
+      value: department.department_id,
+      name: department.department_name
+    }));
 
-      results.forEach(department => {
-        for (const key in department) {
-          if (department.hasOwnProperty(key)) {
-            const valueLength = String(department[key]).length;
-            const headerLength = String(key).length;
-            maxLengths[key] = Math.max(maxLengths[key] || 0, valueLength, headerLength);
-          }
-        }
-      });
+    // Ask user to select a department
+    const selectedDepartment = await inquirer.prompt({
+      type: 'list',
+      name: 'departmentId',
+      message: 'Select a department:',
+      choices: departmentChoices
+    });
 
-      // Print table headers
-      const headers = Object.keys(maxLengths);
-      console.log(headers.map(header => header.padEnd(maxLengths[header])).join(' | '));
+    // Fetch employees in the selected department
+    const [employeeResults] = await connection.promise().query(`
+      SELECT
+        CONCAT(employee.first_name, ' ', employee.last_name) AS employee_name
+      FROM
+        employee
+      INNER JOIN
+        role ON employee.role_id = role.id
+      WHERE
+        role.department_id = ?;
+    `, [selectedDepartment.departmentId]);
 
-      // Print separator
-      console.log(headers.map(header => '-'.repeat(maxLengths[header])).join(' | '));
+    // Display employees in the selected department
+    console.log('\nEmployees in the selected department:');
+    employeeResults.forEach(employee => {
+      console.log(employee.employee_name);
+    });
 
-      // Print data rows
-      results.forEach(department => {
-        console.log(headers.map(header => String(department[header]).padEnd(maxLengths[header])).join(' | '));
-      });
-
-      prompt(); // Prompt again after viewing employees
-    }
-  });
+    prompt(); // Prompt again after viewing employees
+  } catch (err) {
+    console.error('Error fetching departments or employees:', err);
+    prompt(); // Prompt again if there's an error
+  }
 }
 
+//view the department salary, as a sum for the employees in each department
 function viewDeptSalary() {
   const query = `
     SELECT
@@ -376,11 +405,12 @@ function viewDeptSalary() {
         console.log(headers.map(header => String(department[header]).padEnd(maxLengths[header])).join(' | '));
       });
 
-      prompt(); // Prompt again after viewing employees
+      prompt(); // Prompt again after viewing salary
     }
   });
 }
 
+//update the role for an employee
 async function updateRole() {
   // Fetch employees and roles from the database
   let employees;
@@ -424,6 +454,7 @@ async function updateRole() {
   });
 }
 
+//update the manager for an employee
 async function updateManager() {
   // Fetch employees and roles from the database
   let employees;
@@ -463,6 +494,7 @@ async function updateManager() {
   });
 }
 
+//add a new employee, call a prompt to input the new employee information, 
 async function addEmployee() {
   // Fetch employees and roles from the database
   try {
@@ -509,6 +541,7 @@ async function addEmployee() {
     prompt();
 }
 
+//add department function, input name of department and add to list
 async function addDepartment() {
   try {
     const departmentName = await inquirer.prompt([
@@ -531,6 +564,7 @@ async function addDepartment() {
   prompt();
 }
 
+//add a role function. input name of role and add to list
 async function addRole() {
   // Fetch employees and roles from the database
   try {
@@ -570,6 +604,7 @@ async function addRole() {
     prompt();
 }
 
+//delete employee function, select employee from a list, and select to delete
 function deleteEmployee() {
   connection.query(`SELECT id, CONCAT(first_name, ' ', last_name) AS full_name FROM employee`, (err, results) => {
     if (err) {
@@ -602,6 +637,7 @@ function deleteEmployee() {
 });
 }
 
+//a role to delete a specific role from the database
 function deleteRole() {
   connection.query(`SELECT id, title FROM role`, (err, results) => {
     if (err) {
@@ -634,6 +670,7 @@ function deleteRole() {
 });
 }
 
+//function to delete a specific department from a database
 function deleteDepartment() {
   connection.query(`SELECT id, name FROM department`, (err, results) => {
     if (err) {
@@ -652,7 +689,7 @@ function deleteDepartment() {
       choices: departmentChoice
     }
 ]).then(answer => {
-  const selectedDeptId = answer.deptId;
+  const selectedDeptId = answer.departmentId;
   connection.query(`DELETE FROM department WHERE id = ?`, [selectedDeptId], (err, deleteResult) => {
       if (err) {
           console.error('Error deleting department:', err);
