@@ -33,7 +33,23 @@ async function prompt() {
             type: 'list',
             name: 'task',
             message: 'What would you like to do?',
-            choices: ["View All Employees", "View Employees By Manager", "View Employees By Department", "Add Employee", "Update Employee Role", "Update Employee Manager", "View All Roles", "Add Role", "View Salary By Department", "View All Departments", "Add Department", "Delete Employee", "Delete Role", "Delete Department", "Quit"]
+            choices: [
+            "View All Employees", 
+            "View Employees By Manager", 
+            "View Employees By Department", 
+            "Add Employee", 
+            "Update Employee Role", 
+            "Update Employee Manager", 
+            "View All Roles", 
+            "Add Role", 
+            "View Salary By Department", 
+            "View All Departments", 
+            "Add Department", 
+            "Delete Employee", 
+            "Delete Role", 
+            "Delete Department", 
+            "Quit"
+          ]
         }
     ];
     
